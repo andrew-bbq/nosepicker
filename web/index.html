@@ -49,7 +49,7 @@
             <thead>
                 <tr>
                     <th>Hero</th>
-                    <th>Disadvantage</th>
+                    <th class="sortable" data-sort="disadvantage">Disadvantage</th>
                     <th class="sortable" data-sort="winrate">Winrate</th>
                 </tr>
             </thead>
@@ -62,6 +62,8 @@
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script>
+        let heroes = [];
+
         $(document).ready(function() {
             $.ajax({
                 url: './data/heroes.csv',
@@ -118,27 +120,53 @@
                         });
                         data.push(heroMap);
                     });
-                    const counterMap = new Map();
+                    const counterArr = [];
                     data[0].forEach((element, index) => {
-                        console.log(index);
                         const averageDisadvantage = (parseFloat(element.disadvantage) + parseFloat(data[1].get(index).disadvantage) + parseFloat(data[2].get(index).disadvantage) + parseFloat(data[3].get(index).disadvantage)) / 4;
                         const averageWinrate = (parseFloat(element.winrate) + parseFloat(data[1].get(index).winrate) + parseFloat(data[2].get(index).winrate) + parseFloat(data[3].get(index).winrate)) / 4;
-                        counterMap.set(index, {disadvantage: averageDisadvantage, winrate: averageWinrate});
+                        counterArr.push({name: index, disadvantage: averageDisadvantage, winrate: averageWinrate});
                     });
-                    const sortedHeroes = Array.from(counterMap.entries()).sort((a, b) => b[1].disadvantage - a[1].disadvantage);
-                    const $tableBody = $('#heroTableBody')
-                    sortedHeroes.forEach(([hero, stats]) => {
-                        $tableBody.append(`
-                            <tr>
-                                <td>${hero.replace(/-/g, ' ')}</td>
-                                <td>${stats.disadvantage}</td>
-                                <td>${stats.winrate}</td>
-                            </tr>
-                        `);
-                    });
+                    populateTable(counterArr);
+                    heroes = counterArr;
                     $('#herostats').removeAttr('hidden');
                 })
                 .catch(error => console.error('Error fetching CSVs:', error));
+        });
+
+        function populateTable(data) {
+            const tableBody = $('#heroTableBody');
+            tableBody.empty(); // Clear existing rows
+
+            data.forEach(hero => {
+                const row = `<tr>
+                    <td>${hero.name}</td>
+                    <td>${hero.disadvantage}</td>
+                    <td>${hero.winrate}</td>
+                </tr>`;
+                tableBody.append(row);
+            });
+        }
+
+        // Sorting function
+        function sortTableBy(property, order = 'asc') {
+            const sortedData = heroes.sort((a, b) => {
+                if (order === 'asc') {
+                    return a[property] > b[property] ? 1 : -1;
+                } else {
+                    return a[property] < b[property] ? 1 : -1;
+                }
+            });
+            populateTable(sortedData);
+        }
+
+        // Click events for sorting
+        $('th.sortable').click(function() {
+            const property = $(this).data('sort');
+            const currentOrder = $(this).data('order') || 'asc';
+            const newOrder = currentOrder === 'asc' ? 'desc' : 'asc';
+
+            $(this).data('order', newOrder); // Toggle order
+            sortTableBy(property, newOrder); // Sort and repopulate
         });
     </script>
 </body>
