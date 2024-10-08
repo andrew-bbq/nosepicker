@@ -24,7 +24,7 @@ divs = driver.execute_script("""
 """)
 heroes = list(set(
     text.strip() for text in divs
-    if len(text.strip()) >= 4 and not any(char.isdigit() for char in text)
+    if (len(text.strip()) >= 4 or text == "Axe" or text == "Io") and not any(char.isdigit() for char in text)
 ))
 heroes.sort()
 standard_heroes = list(map(standardize_hero_name, heroes))
@@ -56,5 +56,6 @@ for hero in standard_heroes:
         for table_row in counterTable.find_elements(By.CSS_SELECTOR, 'tr'):
             tds = table_row.find_elements(By.CSS_SELECTOR, 'td')
             writer.writerow([standardize_hero_name(tds[1].text), tds[2].text.replace('%', ''), tds[3].text.replace('%', '')])
+        writer.writerow([hero, '0', '50']);
 
 driver.quit()

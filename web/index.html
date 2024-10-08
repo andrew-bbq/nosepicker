@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dropdown Form</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .dropdown-container {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <header class="bg-light py-3">
+        <div class="container d-flex align-items-center">
+            <h1 class="h3 mb-0">nosepicker</h1>
+        </div>
+    </header>
+    <div class="container mt-5">
+        <form>
+            <div class="dropdown-container">
+                <div class="form-group">
+                    <label for="hero1">Hero 1</label>
+                    <select class="form-control" id="hero1"></select>
+                </div>
+                <div class="form-group">
+                    <label for="hero2">Hero 2</label>
+                    <select class="form-control" id="hero2"></select>
+                </div>
+                <div class="form-group">
+                    <label for="hero3">Hero 3</label>
+                    <select class="form-control" id="hero3"></select>
+                </div>
+                <div class="form-group">
+                    <label for="hero4">Hero 4</label>
+                    <select class="form-control" id="hero4"></select>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary float-right">Submit</button>
+        </form>
+    </div>
+    <div class="container mt-5" id="herostats" hidden>
+        <h2>Hero Stats</h2>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Hero</th>
+                    <th>Disadvantage</th>
+                    <th class="sortable" data-sort="winrate">Winrate</th>
+                </tr>
+            </thead>
+            <tbody id="heroTableBody">
+                <!-- Table rows will be inserted here -->
+            </tbody>
+        </table>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $.ajax({
+                url: '../data/heroes.csv',
+                dataType: 'text',
+            }).done(successFunction);
+
+            function successFunction(data) {
+                const rows = data.split("\n").slice(1);
+                let filteredRows = [];
+                rows.forEach(element => {
+                    if (element !== undefined && element !== null && element !== "") {
+                        filteredRows.push(element);
+                    }
+                });
+                for (let i = 1; i <= 4; i++) {
+                    const dropdown = $(`#hero${i}`);
+                    filteredRows.forEach(row => {
+                        if(row == undefined) return;
+                        dropdown.append(`<option value="${row.split(",")[2]}">${row.split(",")[1]}</option>`);
+                    });
+                }
+            }
+        });
+
+        $('form').on('submit', function(event) {
+            event.preventDefault();
+
+            const selectedHeroes = [];
+            for (let i = 1; i <= 4; i++) {
+                selectedHeroes.push($(`#hero${i}`).val());
+            }
+
+            // Fetch CSVs for each selected hero
+            const csvPromises = selectedHeroes.map(hero => {
+                return fetch(`../data/counter/${hero}.csv`)
+                    .then(response => response.text());
+            });
+
+            // Aggregate data once all CSVs are fetched
+            Promise.all(csvPromises)
+                .then(csvDataArray => {
+                    let data = [];
+                    csvDataArray.forEach(csvRow =>{ 
+                        const rows = csvRow.split("\n").slice(1);
+                        let filteredRows = [];
+                        rows.forEach(element => {
+                            if (element !== undefined && element !== null && element !== "") {
+                                filteredRows.push(element.replace("\r", ""));
+                            }
+                        });
+                        const heroMap = new Map();
+                        filteredRows.forEach(row => {
+                            heroMap.set(row.split(',')[0], {disadvantage: row.split(',')[1], winrate: row.split(',')[2]});
+                        });
+                        data.push(heroMap);
+                    });
+                    const counterMap = new Map();
+                    data[0].forEach((element, index) => {
+                        console.log(index);
+                        const averageDisadvantage = (parseFloat(element.disadvantage) + parseFloat(data[1].get(index).disadvantage) + parseFloat(data[2].get(index).disadvantage) + parseFloat(data[3].get(index).disadvantage)) / 4;
+                        const averageWinrate = (parseFloat(element.winrate) + parseFloat(data[1].get(index).winrate) + parseFloat(data[2].get(index).winrate) + parseFloat(data[3].get(index).winrate)) / 4;
+                        counterMap.set(index, {disadvantage: averageDisadvantage, winrate: averageWinrate});
+                    });
+                    const sortedHeroes = Array.from(counterMap.entries()).sort((a, b) => b[1].disadvantage - a[1].disadvantage);
+                    const $tableBody = $('#heroTableBody')
+                    sortedHeroes.forEach(([hero, stats]) => {
+                        $tableBody.append(`
+                            <tr>
+                                <td>${hero.replace(/-/g, ' ')}</td>
+                                <td>${stats.disadvantage}</td>
+                                <td>${stats.winrate}</td>
+                            </tr>
+                        `);
+                    });
+                    $('#herostats').removeAttr('hidden');
+                })
+                .catch(error => console.error('Error fetching CSVs:', error));
+        });
+    </script>
+</body>
+</html>
