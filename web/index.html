@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dropdown Form</title>
+    <title>nosepicker</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <style>
         .dropdown-container {
@@ -64,7 +64,7 @@
     <script>
         $(document).ready(function() {
             $.ajax({
-                url: '../data/heroes.csv',
+                url: './data/heroes.csv',
                 dataType: 'text',
             }).done(successFunction);
 
@@ -96,7 +96,7 @@
 
             // Fetch CSVs for each selected hero
             const csvPromises = selectedHeroes.map(hero => {
-                return fetch(`../data/counter/${hero}.csv`)
+                return fetch(`./data/counter/${hero}.csv`)
                     .then(response => response.text());
             });
 

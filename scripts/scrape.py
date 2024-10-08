@@ -28,9 +28,9 @@ heroes = list(set(
 ))
 heroes.sort()
 standard_heroes = list(map(standardize_hero_name, heroes))
-if os.path.exists("./data/heroes.csv"):
-    os.remove("./data/heroes.csv")
-with open('./data/heroes.csv', mode='w', newline='', encoding='utf-8') as csvfile:
+if os.path.exists("./web/data/heroes.csv"):
+    os.remove("./web/data/heroes.csv")
+with open('./web/data/heroes.csv', mode='w', newline='', encoding='utf-8') as csvfile:
     writer = csv.writer(csvfile)
     
     # header row
@@ -44,7 +44,7 @@ with open('./data/heroes.csv', mode='w', newline='', encoding='utf-8') as csvfil
 
 # Collect counter data
 for hero in standard_heroes:
-    counter_path = "./data/counter/{0}.csv".format(hero)
+    counter_path = "./web/data/counter/{0}.csv".format(hero)
     if os.path.exists(counter_path):
         continue
     driver.get('https://www.dotabuff.com/heroes/{0}/counters'.format(hero))
