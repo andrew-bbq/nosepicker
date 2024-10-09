@@ -22,6 +22,10 @@
     </header>
     <div class="container mt-5">
         <form>
+            <div class="form-group form-check">
+                <input type="checkbox" class="form-check-input" id="hideHeroesCheckbox">
+                <label class="form-check-label" for="hideHeroesCheckbox">Second Phase?</label>
+            </div>
             <div class="dropdown-container">
                 <div class="form-group">
                     <label for="hero1">Hero 1</label>
@@ -63,6 +67,7 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script>
         let heroes = [];
+        let hideHeroes = false;
 
         $(document).ready(function() {
             $.ajax({
@@ -86,6 +91,15 @@
                     });
                 }
             }
+
+            $('#hideHeroesCheckbox').change(function() {
+                hideHeroes = this.checked;
+                if (hideHeroes) {
+                    $('#hero3, #hero4').parent().attr('hidden', true);
+                } else {
+                    $('#hero3, #hero4').parent().removeAttr('hidden');
+                }
+            });
         });
 
         $('form').on('submit', function(event) {
@@ -122,8 +136,10 @@
                     });
                     const counterArr = [];
                     data[0].forEach((element, index) => {
-                        const averageDisadvantage = (parseFloat(element.disadvantage) + parseFloat(data[1].get(index).disadvantage) + parseFloat(data[2].get(index).disadvantage) + parseFloat(data[3].get(index).disadvantage)) / 4;
-                        const averageWinrate = (parseFloat(element.winrate) + parseFloat(data[1].get(index).winrate) + parseFloat(data[2].get(index).winrate) + parseFloat(data[3].get(index).winrate)) / 4;
+                        const totalDisadvantage = parseFloat(element.disadvantage) + parseFloat(data[1].get(index).disadvantage);
+                        const totalWinrate = parseFloat(element.winrate) + parseFloat(data[1].get(index).winrate);
+                        let averageDisadvantage = hideHeroes ? totalDisadvantage / 2 : (totalDisadvantage + parseFloat(data[2].get(index).disadvantage) + parseFloat(data[3].get(index).disadvantage)) / 4;
+                        let averageWinrate = hideHeroes ? totalWinrate / 2 : (totalWinrate + parseFloat(data[2].get(index).winrate) + parseFloat(data[3].get(index).winrate)) /4;
                         counterArr.push({name: index, disadvantage: averageDisadvantage, winrate: averageWinrate});
                     });
                     populateTable(counterArr);
